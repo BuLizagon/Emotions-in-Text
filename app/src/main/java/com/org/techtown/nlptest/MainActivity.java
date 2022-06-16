@@ -1,17 +1,24 @@
 package com.org.techtown.nlptest;
 
+import android.content.Intent;
+import android.os.Bundle;
+import android.speech.RecognizerIntent;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.widget.NestedScrollView;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 
-import android.os.Bundle;
+import java.util.ArrayList;
+import java.util.Locale;
+
+
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
 import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.HttpRequest;
@@ -31,7 +38,9 @@ import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+
 public class MainActivity extends AppCompatActivity {
+
     EditText editTextView; // View to get the text to be analyzed
     TextView resultTextView; // View to display the results obtained after analysis
     NestedScrollView nestedScrollView; // Wrapper view so that if the results are getting out of bounds from screen so the user can scroll and see complete results
@@ -57,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }).build();
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,13 +73,37 @@ public class MainActivity extends AppCompatActivity {
         editTextView = (EditText) findViewById(R.id.text_et);
         resultTextView = (TextView) findViewById(R.id.result_tv);
         nestedScrollView = (NestedScrollView) findViewById(R.id.nsv);
+        setTitle("감정분석");
         prepareApi();
     }
 
-    /**
-     * Method called on the click of the Button
-     * @param view -> the view which is clicked
-     */
+    public void getSpeechInput(View view) {
+
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.KOREA);
+
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(intent, 10);
+        } else {
+            Toast.makeText(this, "Your Device Don't Support Speech Input", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode) {
+            case 10:
+                if (resultCode == RESULT_OK && data != null) {
+                    ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    editTextView.setText(result.get(0));
+                }
+                break;
+        }
+    }
+
     public void startAnalysis(View view) {
         String textToAnalyze = editTextView.getText().toString();
         if (TextUtils.isEmpty(textToAnalyze)) {
